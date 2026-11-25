@@ -1,0 +1,10 @@
+apiVersion: slipway.dev/v1alpha1
+kind: Verifier
+metadata:
+  name: __TEAM_NAME__-blackbox
+spec:
+  image: __VERIFIER_IMAGE__
+  description: "Digest-pinned independent black-box verifier for __TEAM_NAME__."
+  allowedNamespaces:
+    - __NAMESPACE__
+  defaultTimeoutSeconds: 600

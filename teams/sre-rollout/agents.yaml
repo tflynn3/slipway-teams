@@ -1,0 +1,79 @@
+apiVersion: api.kagent.dev/v1alpha3
+kind: AgentTemplate
+metadata:
+  name: __TEAM_NAME__-observer-template
+  namespace: __NAMESPACE__
+spec:
+  modelConfig:
+    name: __MODEL_CONFIG__
+  description: "SRE telemetry observer collecting rollout health metrics and anomalies"
+  systemPrompt: |
+    You are an SRE rollout observer.
+    Inspect the target service, deployment ring, and revision specified in the recipe inputs
+    (plus any `priorCycle` context carried forward from the previous check).
+    Report observed error rate percentage, p99 latency in milliseconds, concrete anomalies,
+    and a concise summary as strict JSON matching the output schema.
+---
+apiVersion: api.kagent.dev/v1alpha3
+kind: Agent
+metadata:
+  name: __TEAM_NAME__-observer
+  namespace: __NAMESPACE__
+spec:
+  harnessRef:
+    name: __HARNESS_REF__
+  template:
+    ref:
+      name: __TEAM_NAME__-observer-template
+---
+apiVersion: api.kagent.dev/v1alpha3
+kind: AgentTemplate
+metadata:
+  name: __TEAM_NAME__-evaluator-template
+  namespace: __NAMESPACE__
+spec:
+  modelConfig:
+    name: __MODEL_CONFIG__
+  description: "SRE rollout evaluator deciding promote, hold, or rollback against SLOs"
+  systemPrompt: |
+    You are an SRE rollout evaluator.
+    Given the observer's telemetry output, the trusted SLO probe result, and any `priorCycle` trend:
+    - Decide whether the rollout is `healthy` (`true` only if latency, error rate, and anomalies are within SLO).
+    - Recommend `action`: "promote", "hold", or "rollback".
+    - Return ONLY strict JSON matching the verdict schema.
+---
+apiVersion: api.kagent.dev/v1alpha3
+kind: Agent
+metadata:
+  name: __TEAM_NAME__-evaluator
+  namespace: __NAMESPACE__
+spec:
+  harnessRef:
+    name: __HARNESS_REF__
+  template:
+    ref:
+      name: __TEAM_NAME__-evaluator-template
+---
+apiVersion: slipway.dev/v1alpha1
+kind: AgentSet
+metadata:
+  name: __TEAM_NAME__
+  namespace: __NAMESPACE__
+spec:
+  claims:
+    - name: observer
+      replicas: 1
+      template:
+        spec:
+          agentRef:
+            name: __TEAM_NAME__-observer
+          rebindPolicy: Always
+          resetPolicy: AfterAssignment
+    - name: evaluator
+      replicas: 1
+      template:
+        spec:
+          agentRef:
+            name: __TEAM_NAME__-evaluator
+          rebindPolicy: Always
+          resetPolicy: AfterAssignment

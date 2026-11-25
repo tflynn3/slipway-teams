@@ -1,0 +1,51 @@
+# Drop-in reviewer overlay replacing the reviewer seat with The-PR-Agent/pr-agent.
+# Requires RemoteMCPServer/pr-agent-mcp (see bridges/pr-agent-mcp).
+apiVersion: api.kagent.dev/v1alpha3
+kind: AgentTemplate
+metadata:
+  name: __TEAM_NAME__-reviewer-template
+  namespace: __NAMESPACE__
+spec:
+  modelConfig:
+    name: __MODEL_CONFIG__
+  description: "Automated PR code reviewer powered by The-PR-Agent/pr-agent"
+  tools:
+    - mcp:
+        server:
+          kind: RemoteMCPServer
+          name: pr-agent-mcp
+        tools:
+          - review_candidate
+  outputSchema:
+    type: object
+    additionalProperties: false
+    properties:
+      approved:
+        type: boolean
+      testedCommit:
+        type: string
+      score:
+        type: integer
+      summary:
+        type: string
+    required: [approved, testedCommit, score, summary]
+  systemPrompt: |
+    You are an automated PR code reviewer powered by The-PR-Agent/pr-agent.
+    For every review assignment:
+    1. Call `review_candidate` with the exact `repository`, `base_commit`, `candidate_branch`,
+       and `candidate_commit` provided in the workflow instructions and context.
+    2. Never invent or alter the commit SHA, score, or approval status.
+    3. Return ONLY strict JSON matching the schema:
+       {"approved": <bool>, "testedCommit": "<40-char-sha>", "score": <int>, "summary": "<summary>"}.
+---
+apiVersion: api.kagent.dev/v1alpha3
+kind: Agent
+metadata:
+  name: __TEAM_NAME__-reviewer
+  namespace: __NAMESPACE__
+spec:
+  harnessRef:
+    name: __HARNESS_REF__
+  template:
+    ref:
+      name: __TEAM_NAME__-reviewer-template

@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pr-agent-mcp
+  namespace: kagent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pr-agent-mcp
+  template:
+    metadata:
+      labels:
+        app: pr-agent-mcp
+    spec:
+      containers:
+        - name: pr-agent-mcp
+          image: pr-agent-mcp:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: PR_AGENT_MODEL
+              value: "gemini/gemini-3-flash-preview"
+            - name: GEMINI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: gemini-api-key
+                  key: GEMINI_API_KEY
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pr-agent-mcp
+  namespace: kagent
+spec:
+  selector:
+    app: pr-agent-mcp
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+apiVersion: api.kagent.dev/v1alpha3
+kind: RemoteMCPServer
+metadata:
+  name: pr-agent-mcp
+  namespace: kagent
+spec:
+  description: "The-PR-Agent/pr-agent review server (PlainDiffGitProvider + JSON output)"
+  protocol: STREAMABLE_HTTP
+  url: http://pr-agent-mcp.kagent.svc.cluster.local:8080/mcp
+  timeout: 180s

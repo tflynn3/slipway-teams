@@ -1,0 +1,36 @@
+# Exposes a host-running codex-mcp bridge to kagent inside a local kind cluster.
+# Replace 192.168.5.2 with the host IP reachable from inside your cluster nodes
+# (check `docker exec <kind-node> getent hosts host.docker.internal`).
+apiVersion: v1
+kind: Service
+metadata:
+  name: codex-mcp
+  namespace: kagent
+spec:
+  ports:
+    - name: http
+      port: 8095
+      targetPort: 8095
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: codex-mcp
+  namespace: kagent
+subsets:
+  - addresses:
+      - ip: 192.168.5.2
+    ports:
+      - name: http
+        port: 8095
+---
+apiVersion: api.kagent.dev/v1alpha3
+kind: RemoteMCPServer
+metadata:
+  name: codex-mcp
+  namespace: kagent
+spec:
+  description: "Codex CLI multi-model Streamable HTTP MCP bridge"
+  protocol: STREAMABLE_HTTP
+  url: http://codex-mcp.kagent.svc.cluster.local:8095/mcp
+  timeout: 600s

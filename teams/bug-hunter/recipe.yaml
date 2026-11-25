@@ -1,0 +1,54 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: __TEAM_NAME__-recipe-v1
+  namespace: __NAMESPACE__
+immutable: true
+data:
+  recipe.yaml: |
+    inputs: [target]
+    timeout: 30m
+    mode: Exclusive
+    writes: ["hunt/**"]
+    steps:
+      - name: hunt
+        recipePath: qa/discover/hunt
+        agent:
+          group: hunter
+          instructions: |
+            Inspect `priorCycle` in recipe inputs to see previous focus areas and
+            confirmed bugs. Choose a fresh high-risk failure mode on the supplied
+            target, execute adversarial black-box probes, and report candidate bugs
+            matching hunt.json.
+        output:
+          schemaFrom:
+            name: __TEAM_NAME__-schemas
+            key: hunt.json
+      - name: repro-check
+        recipePath: qa/verify/repro-check
+        dependsOn: [hunt]
+        inputsFrom:
+          focusArea: {step: hunt, field: focusArea}
+          testedTarget: {step: hunt, field: testedTarget}
+        verify:
+          verifier: __TEAM_NAME__-repro
+          params:
+            target: "${target}"
+            mode: repro-check
+          infrastructureRetries: 1
+      - name: triage
+        recipePath: qa/report/triage
+        dependsOn: [repro-check]
+        inputsFrom:
+          focusArea: {step: hunt, field: focusArea}
+          huntSummary: {step: hunt, field: summary}
+        agent:
+          group: triager
+          instructions: |
+            Deduplicate the candidate bugs against `priorCycle`, rank severity,
+            record minimal reproduction steps in `confirmedBugs`, and choose the
+            most valuable `nextCycleFocus` for the next continuous cycle.
+        output:
+          schemaFrom:
+            name: __TEAM_NAME__-schemas
+            key: triage.json

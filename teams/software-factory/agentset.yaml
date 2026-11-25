@@ -1,0 +1,39 @@
+apiVersion: slipway.dev/v1alpha1
+kind: AgentSet
+metadata:
+  name: __TEAM_NAME__
+  namespace: __NAMESPACE__
+spec:
+  claims:
+    - name: architect
+      replicas: 1
+      template:
+        spec:
+          agentRef:
+            name: __TEAM_NAME__-architect
+          rebindPolicy: Always
+          resetPolicy: Never
+    - name: builder
+      replicas: 2
+      template:
+        spec:
+          agentRef:
+            name: __TEAM_NAME__-builder
+          rebindPolicy: Always
+          resetPolicy: OnFailure
+    - name: reviewer
+      replicas: 1
+      template:
+        spec:
+          agentRef:
+            name: __TEAM_NAME__-reviewer
+          rebindPolicy: Always
+          resetPolicy: AfterAssignment
+    - name: qa
+      replicas: 1
+      template:
+        spec:
+          agentRef:
+            name: __TEAM_NAME__-qa
+          rebindPolicy: Always
+          resetPolicy: AfterAssignment

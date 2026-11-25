@@ -1,0 +1,190 @@
+# Dual-model Codex overlay:
+#   - High-reasoning model (e.g., gpt-6.2-sol) for architect, reviewer, and qa
+#   - Fast implementation model (e.g., gpt-6.1-terra) for parallel builders
+# Requires RemoteMCPServer/codex-mcp (see bridges/codex-mcp).
+apiVersion: api.kagent.dev/v1alpha3
+kind: AgentTemplate
+metadata:
+  name: __TEAM_NAME__-architect-template
+  namespace: __NAMESPACE__
+spec:
+  modelConfig:
+    name: __MODEL_CONFIG__
+  description: "Architect seat delegating design and planning to codex-mcp"
+  tools:
+    - mcp:
+        server:
+          kind: RemoteMCPServer
+          name: codex-mcp
+        tools:
+          - codex_design
+  systemPrompt: |
+    You are a thin dispatcher for the team's Principal Architect via `codex_design`.
+    For every assignment:
+    1. Call `codex_design` with `repo_url` = "__REPO_URL__" and the full assignment instructions as `task`.
+    2. Never invent or override the architect's plan; return the exact JSON output from `codex_design`.
+---
+apiVersion: api.kagent.dev/v1alpha3
+kind: Agent
+metadata:
+  name: __TEAM_NAME__-architect
+  namespace: __NAMESPACE__
+spec:
+  harnessRef:
+    name: __HARNESS_REF__
+  template:
+    ref:
+      name: __TEAM_NAME__-architect-template
+---
+apiVersion: api.kagent.dev/v1alpha3
+kind: AgentTemplate
+metadata:
+  name: __TEAM_NAME__-builder-template
+  namespace: __NAMESPACE__
+spec:
+  modelConfig:
+    name: __MODEL_CONFIG__
+  description: "Builder seat delegating scoped implementation to codex-mcp"
+  tools:
+    - mcp:
+        server:
+          kind: RemoteMCPServer
+          name: codex-mcp
+        tools:
+          - codex_implement
+  outputSchema:
+    type: object
+    additionalProperties: false
+    properties:
+      candidateBranch:
+        type: string
+      commit:
+        type: string
+      summary:
+        type: string
+    required: [candidateBranch, commit, summary]
+  systemPrompt: |
+    You are a thin dispatcher for the team's implementation engine via `codex_implement`.
+    For every assignment:
+    1. Extract `base_commit` from the Slipway workflow context or base commit instruction, and set
+       `candidate_branch` = "slipway/<run.uid>".
+    2. Call `codex_implement` with `repo_url` = "__REPO_URL__", `base_commit`, `candidate_branch`,
+       and the full assignment instructions (including any priorAttempts repair diagnostics) as `task`.
+    3. Return ONLY the exact JSON {"candidateBranch", "commit", "summary"} returned by `codex_implement`.
+---
+apiVersion: api.kagent.dev/v1alpha3
+kind: Agent
+metadata:
+  name: __TEAM_NAME__-builder
+  namespace: __NAMESPACE__
+spec:
+  harnessRef:
+    name: __HARNESS_REF__
+  template:
+    ref:
+      name: __TEAM_NAME__-builder-template
+---
+apiVersion: api.kagent.dev/v1alpha3
+kind: AgentTemplate
+metadata:
+  name: __TEAM_NAME__-reviewer-template
+  namespace: __NAMESPACE__
+spec:
+  modelConfig:
+    name: __MODEL_CONFIG__
+  description: "Reviewer seat delegating strict code and security review to codex-mcp"
+  tools:
+    - mcp:
+        server:
+          kind: RemoteMCPServer
+          name: codex-mcp
+        tools:
+          - codex_review
+  outputSchema:
+    type: object
+    additionalProperties: false
+    properties:
+      approved:
+        type: boolean
+      testedCommit:
+        type: string
+      score:
+        type: integer
+      summary:
+        type: string
+    required: [approved, testedCommit, score, summary]
+  systemPrompt: |
+    You are a thin dispatcher for the team's Staff Reviewer via `codex_review`.
+    For every assignment:
+    1. Extract `base_commit`, `candidate_branch` (`inputs.candidateBranch`), and
+       `candidate_commit` (`inputs.candidateCommit`) from the workflow context.
+    2. Call `codex_review` with `repo_url` = "__REPO_URL__", `base_commit`, `candidate_branch`,
+       `candidate_commit`, and any review instructions as `task`.
+    3. Never alter the verdict; return ONLY the exact JSON {"approved", "testedCommit", "score", "summary"}.
+---
+apiVersion: api.kagent.dev/v1alpha3
+kind: Agent
+metadata:
+  name: __TEAM_NAME__-reviewer
+  namespace: __NAMESPACE__
+spec:
+  harnessRef:
+    name: __HARNESS_REF__
+  template:
+    ref:
+      name: __TEAM_NAME__-reviewer-template
+---
+apiVersion: api.kagent.dev/v1alpha3
+kind: AgentTemplate
+metadata:
+  name: __TEAM_NAME__-qa-template
+  namespace: __NAMESPACE__
+spec:
+  modelConfig:
+    name: __MODEL_CONFIG__
+  description: "Independent black-box QA seat delegating to codex-mcp"
+  tools:
+    - mcp:
+        server:
+          kind: RemoteMCPServer
+          name: codex-mcp
+        tools:
+          - codex_qa
+  outputSchema:
+    type: object
+    additionalProperties: false
+    properties:
+      passed:
+        type: boolean
+      testedCommit:
+        type: string
+      summary:
+        type: string
+      bugsFound:
+        type: array
+        items:
+          type: string
+      improvements:
+        type: array
+        items:
+          type: string
+      metricsSummary:
+        type: string
+    required: [passed, testedCommit, summary, bugsFound, improvements, metricsSummary]
+  systemPrompt: |
+    You are a thin dispatcher for independent black-box QA via `codex_qa`.
+    For every assignment:
+    1. Call `codex_qa` with `repo_url` = "__REPO_URL__" and the full assignment instructions as `task`.
+    2. Return ONLY the exact JSON object returned by `codex_qa`.
+---
+apiVersion: api.kagent.dev/v1alpha3
+kind: Agent
+metadata:
+  name: __TEAM_NAME__-qa
+  namespace: __NAMESPACE__
+spec:
+  harnessRef:
+    name: __HARNESS_REF__
+  template:
+    ref:
+      name: __TEAM_NAME__-qa-template

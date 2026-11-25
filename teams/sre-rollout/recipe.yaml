@@ -1,0 +1,56 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: __TEAM_NAME__-recipe-v1
+  namespace: __NAMESPACE__
+immutable: true
+data:
+  recipe.yaml: |
+    inputs: [service, ring, revision]
+    timeout: 20m
+    mode: Exclusive
+    writes: ["rollout/${ring}/**"]
+    steps:
+      - name: observe
+        recipePath: rollout/telemetry/observe
+        agent:
+          group: observer
+          instructions: |
+            Inspect live telemetry, pod readiness, error logs, and latency percentiles
+            for the supplied service, rollout ring, and revision. Compare with
+            `priorCycle` if present and return strict JSON matching observation.json.
+        output:
+          schemaFrom:
+            name: __TEAM_NAME__-schemas
+            key: observation.json
+      - name: slo-probe
+        recipePath: rollout/verify/slo-probe
+        dependsOn: [observe]
+        inputsFrom:
+          observedRevision: {step: observe, field: revision}
+          observedErrorRate: {step: observe, field: errorRatePct}
+        verify:
+          verifier: __TEAM_NAME__-slo-probe
+          params:
+            service: "${service}"
+            ring: "${ring}"
+            revision: "${revision}"
+          infrastructureRetries: 1
+      - name: evaluate
+        recipePath: rollout/gate/evaluate
+        dependsOn: [slo-probe]
+        inputsFrom:
+          errorRatePct: {step: observe, field: errorRatePct}
+          p99LatencyMs: {step: observe, field: p99LatencyMs}
+          observation: {step: observe, field: summary}
+        agent:
+          group: evaluator
+          instructions: |
+            Evaluate whether the service revision satisfies SLO thresholds in the
+            supplied rollout ring given the telemetry observation and passing
+            synthetic SLO probe. Recommend promote, hold, or rollback.
+        output:
+          schemaFrom:
+            name: __TEAM_NAME__-schemas
+            key: verdict.json
+        successWhen: "output.healthy == true && output.action != 'rollback'"

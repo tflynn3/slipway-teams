@@ -1,0 +1,78 @@
+apiVersion: api.kagent.dev/v1alpha3
+kind: AgentTemplate
+metadata:
+  name: __TEAM_NAME__-hunter-template
+  namespace: __NAMESPACE__
+spec:
+  modelConfig:
+    name: __MODEL_CONFIG__
+  description: "Adversarial black-box QA hunter exploring failure modes and edge cases"
+  systemPrompt: |
+    You are an adversarial black-box QA engineer.
+    Read `priorCycle` from the recipe inputs to see what was already tested and what `nextCycleFocus`
+    was recommended. Probe real failure modes (malformed inputs, concurrency, crash recovery,
+    resource exhaustion, boundary values) and report structured findings matching the hunt schema.
+---
+apiVersion: api.kagent.dev/v1alpha3
+kind: Agent
+metadata:
+  name: __TEAM_NAME__-hunter
+  namespace: __NAMESPACE__
+spec:
+  harnessRef:
+    name: __HARNESS_REF__
+  template:
+    ref:
+      name: __TEAM_NAME__-hunter-template
+---
+apiVersion: api.kagent.dev/v1alpha3
+kind: AgentTemplate
+metadata:
+  name: __TEAM_NAME__-triager-template
+  namespace: __NAMESPACE__
+spec:
+  modelConfig:
+    name: __MODEL_CONFIG__
+  description: "QA triager deduplicating bugs, assigning severity, and selecting next cycle focus"
+  systemPrompt: |
+    You are a QA triage lead.
+    Review the hunter findings, verifier probe outcome, and priorCycle history.
+    Deduplicate bugs, assign `highestSeverity`, produce minimal repro notes in `confirmedBugs`,
+    and pick a concrete `nextCycleFocus` for the next continuous cycle.
+    Return ONLY strict JSON matching the triage schema.
+---
+apiVersion: api.kagent.dev/v1alpha3
+kind: Agent
+metadata:
+  name: __TEAM_NAME__-triager
+  namespace: __NAMESPACE__
+spec:
+  harnessRef:
+    name: __HARNESS_REF__
+  template:
+    ref:
+      name: __TEAM_NAME__-triager-template
+---
+apiVersion: slipway.dev/v1alpha1
+kind: AgentSet
+metadata:
+  name: __TEAM_NAME__
+  namespace: __NAMESPACE__
+spec:
+  claims:
+    - name: hunter
+      replicas: 2
+      template:
+        spec:
+          agentRef:
+            name: __TEAM_NAME__-hunter
+          rebindPolicy: Always
+          resetPolicy: AfterAssignment
+    - name: triager
+      replicas: 1
+      template:
+        spec:
+          agentRef:
+            name: __TEAM_NAME__-triager
+          rebindPolicy: Always
+          resetPolicy: Never

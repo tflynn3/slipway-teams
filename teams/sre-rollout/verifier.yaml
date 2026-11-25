@@ -1,0 +1,10 @@
+apiVersion: slipway.dev/v1alpha1
+kind: Verifier
+metadata:
+  name: __TEAM_NAME__-slo-probe
+spec:
+  image: __VERIFIER_IMAGE__
+  description: "Deterministic synthetic latency and error-rate SLO probe for __SERVICE_NAME__."
+  allowedNamespaces:
+    - __NAMESPACE__
+  defaultTimeoutSeconds: 180

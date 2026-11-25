@@ -1,0 +1,21 @@
+apiVersion: slipway.dev/v1alpha1
+kind: WorkflowSchedule
+metadata:
+  name: __TEAM_NAME__-watch
+  namespace: __NAMESPACE__
+spec:
+  agentSet: __TEAM_NAME__
+  recipe:
+    name: __TEAM_NAME__-recipe-v1
+    key: recipe.yaml
+  inputs:
+    service: __SERVICE_NAME__
+    ring: canary
+    revision: current
+  scope: __TARGET_SCOPE__
+  mode: Interval
+  intervalSeconds: 300
+  failureBackoffSeconds: 120
+  concurrencyPolicy: Forbid
+  historyLimit: 12
+  carryForwardOutput: true

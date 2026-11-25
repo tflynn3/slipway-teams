@@ -1,0 +1,102 @@
+# Immutable WorkflowBacklog delivery recipe (build -> verify || review -> land)
+# referencing shared JSON Schemas from ConfigMap/__TEAM_NAME__-schemas via output.schemaFrom.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: __TEAM_NAME__-deliver-v1
+  namespace: __NAMESPACE__
+immutable: true
+data:
+  recipe.yaml: |
+    inputs: [component, summary, task]
+    timeout: 45m
+    mode: Ordered
+    reads: ["**"]
+    writes: ["${component}/**"]
+    steps:
+      - name: build
+        recipePath: deliver/implement/build
+        agent:
+          group: builder
+          instructions: |
+            Implement the scoped work item described in the recipe inputs on branch
+            slipway/<run.uid> from the exact pinned base commit. Limit edits strictly
+            to leased write paths, run local unit tests, commit, and push only the
+            candidate branch. If priorAttempts diagnostics are present, fix every
+            reported failure while preserving earlier fixes.
+        output:
+          schemaFrom:
+            name: __TEAM_NAME__-schemas
+            key: build.json
+      - name: verify
+        recipePath: deliver/gate/verify
+        dependsOn: [build]
+        verify:
+          verifier: __TEAM_NAME__-blackbox
+          candidateBranch: {step: build, field: candidateBranch}
+          commit: {step: build, field: commit}
+          params:
+            component: "${component}"
+          infrastructureRetries: 1
+      - name: review
+        recipePath: deliver/gate/review
+        dependsOn: [build]
+        inputsFrom:
+          candidateBranch: {step: build, field: candidateBranch}
+          candidateCommit: {step: build, field: commit}
+        agent:
+          group: reviewer
+          instructions: |
+            Review the candidate commit strictly for correctness, concurrency,
+            durability, error handling, and security vulnerabilities. Approve only
+            with score >= 75 and zero correctness or security defects.
+        output:
+          schemaFrom:
+            name: __TEAM_NAME__-schemas
+            key: review.json
+        successWhen: "output.approved == true && output.score >= 75 && output.testedCommit == inputs.candidateCommit"
+      - name: land
+        recipePath: deliver/publish/land
+        dependsOn: [verify, review]
+        land:
+          verification: verify
+          candidateBranch: {step: build, field: candidateBranch}
+          commit: {step: build, field: commit}
+---
+# Immutable WorkflowSchedule continuous black-box QA recipe (eval -> verify probe).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: __TEAM_NAME__-qa-v1
+  namespace: __NAMESPACE__
+immutable: true
+data:
+  recipe.yaml: |
+    inputs: [target]
+    timeout: 25m
+    mode: Exclusive
+    writes: ["eval/**"]
+    steps:
+      - name: blackbox
+        recipePath: qa/eval/blackbox
+        agent:
+          group: qa
+          instructions: |
+            Run independent black-box, crash-recovery, malformed-input, concurrency,
+            and benchmark evaluation against the target. Inspect `priorCycle` in the
+            recipe inputs to verify regressions and explore uncovered edge cases.
+        output:
+          schemaFrom:
+            name: __TEAM_NAME__-schemas
+            key: qa.json
+      - name: probe
+        recipePath: qa/verify/probe
+        dependsOn: [blackbox]
+        inputsFrom:
+          testedCommit: {step: blackbox, field: testedCommit}
+        verify:
+          verifier: __TEAM_NAME__-blackbox
+          params:
+            mode: post-cycle
+            target: "${target}"
+          infrastructureRetries: 1
