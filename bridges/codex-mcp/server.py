@@ -5,6 +5,7 @@ an implementation model (`CODEX_BUILDER_MODEL`). Runs each invocation in a fresh
 isolated temporary Git worktree with `--ignore-user-config --ephemeral`.
 """
 
+import asyncio
 import json
 import os
 import re
@@ -147,13 +148,22 @@ def _git_clone(repo_url: str, dest: Path, branch: str = "main") -> str | None:
 
 
 @mcp.tool()
-def codex_design(
+async def codex_design(
     repo_url: str,
     task: str,
     output_schema_json: str = "",
     branch: str = "main",
 ) -> dict:
     """Run the architect model for design, feature selection, and work-item planning."""
+    return await asyncio.to_thread(_codex_design_sync, repo_url, task, output_schema_json, branch)
+
+
+def _codex_design_sync(
+    repo_url: str,
+    task: str,
+    output_schema_json: str = "",
+    branch: str = "main",
+) -> dict:
     schema = None
     if output_schema_json.strip():
         try:
@@ -190,7 +200,7 @@ def codex_design(
 
 
 @mcp.tool()
-def codex_implement(
+async def codex_implement(
     repo_url: str,
     base_commit: str,
     candidate_branch: str,
@@ -199,6 +209,19 @@ def codex_implement(
     branch: str = "main",
 ) -> dict:
     """Run the builder model to implement a scoped change, test, commit, and push candidate_branch."""
+    return await asyncio.to_thread(
+        _codex_implement_sync, repo_url, base_commit, candidate_branch, task, writes_csv, branch
+    )
+
+
+def _codex_implement_sync(
+    repo_url: str,
+    base_commit: str,
+    candidate_branch: str,
+    task: str,
+    writes_csv: str = "",
+    branch: str = "main",
+) -> dict:
     if not _SHA_RE.match(base_commit):
         return {"error": f"invalid base_commit: {base_commit}"}
 
@@ -277,7 +300,7 @@ def codex_implement(
 
 
 @mcp.tool()
-def codex_review(
+async def codex_review(
     repo_url: str,
     base_commit: str,
     candidate_branch: str,
@@ -286,6 +309,19 @@ def codex_review(
     branch: str = "main",
 ) -> dict:
     """Run the architect model for strict code, architecture, concurrency, and security review."""
+    return await asyncio.to_thread(
+        _codex_review_sync, repo_url, base_commit, candidate_branch, candidate_commit, task, branch
+    )
+
+
+def _codex_review_sync(
+    repo_url: str,
+    base_commit: str,
+    candidate_branch: str,
+    candidate_commit: str,
+    task: str = "",
+    branch: str = "main",
+) -> dict:
     if not _SHA_RE.match(base_commit) or not _SHA_RE.match(candidate_commit):
         return {
             "approved": False,
@@ -370,8 +406,12 @@ def codex_review(
 
 
 @mcp.tool()
-def codex_qa(repo_url: str, task: str, branch: str = "main") -> dict:
+async def codex_qa(repo_url: str, task: str, branch: str = "main") -> dict:
     """Run the architect model for black-box, stress, crash-recovery, and E2E evaluation."""
+    return await asyncio.to_thread(_codex_qa_sync, repo_url, task, branch)
+
+
+def _codex_qa_sync(repo_url: str, task: str, branch: str = "main") -> dict:
     with tempfile.TemporaryDirectory(prefix="codex-qa-") as tmp:
         repo_dir = Path(tmp) / "repo"
         err = _git_clone(repo_url, repo_dir, branch=branch)

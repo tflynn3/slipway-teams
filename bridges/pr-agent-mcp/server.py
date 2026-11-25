@@ -6,6 +6,7 @@ returns a structured verdict compatible with Slipway's `output.schemaFrom` and C
 `successWhen` gate.
 """
 
+import asyncio
 import json
 import os
 import re
@@ -101,7 +102,7 @@ def _extract_summary(review_obj: dict) -> str:
 
 
 @mcp.tool()
-def review_candidate(
+async def review_candidate(
     repository: str,
     base_commit: str,
     candidate_branch: str,
@@ -109,6 +110,18 @@ def review_candidate(
     target_branch: str = "main",
 ) -> dict:
     """Review a Git candidate commit against base_commit using The-PR-Agent/pr-agent."""
+    return await asyncio.to_thread(
+        _review_candidate_sync, repository, base_commit, candidate_branch, candidate_commit, target_branch
+    )
+
+
+def _review_candidate_sync(
+    repository: str,
+    base_commit: str,
+    candidate_branch: str,
+    candidate_commit: str,
+    target_branch: str = "main",
+) -> dict:
     if not _SHA_RE.match(base_commit) or not _SHA_RE.match(candidate_commit):
         return {
             "approved": False,
