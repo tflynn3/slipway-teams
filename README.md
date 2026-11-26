@@ -11,6 +11,7 @@ Slipway keeps its core control plane domain-agnostic (`AgentSet`, `WorkflowRun`,
 | [`teams/software-factory`](teams/software-factory) | Continuous & backlog-driven autonomous software development with dual-model separation (architect/reviewer/QA + parallel builders), trusted black-box verification, and PR-Agent review overlay | `AgentSet`, `WorkflowBacklog`, `WorkflowSchedule`, `Verifier`, immutable `schemaFrom` ConfigMaps, `PathLease` |
 | [`teams/sre-rollout`](teams/sre-rollout) | Non-Git recurring canary & rollout validation (`observe` → deterministic SLO `verify` probe → `evaluate` → guarded `remediate`) | `AgentSet`, `WorkflowSchedule` (`Interval`), `Verifier`, non-Git `scope` lease, `inputsFrom` |
 | [`teams/bug-hunter`](teams/bug-hunter) | Continuous black-box bug hunting, deterministic reproduction, and triage carrying findings across cycles | `AgentSet`, `WorkflowSchedule` (`Continuous`, `carryForwardOutput: true`), `Verifier`, non-Git `scope` lease |
+| [`teams/autonomous-org`](teams/autonomous-org) | Executive leadership council (`research` → `pm` → `architect` → `recruit`) that continuously builds the roadmap, makes architecture/infra decisions, and dynamically recruits specialist `AgentTemplate`s + `AgentSet`s | `AgentSet`, `WorkflowSchedule` (`Continuous`, `carryForwardOutput: true`), immutable `schemaFrom` ConfigMaps, `inputsFrom`, non-Git `scope` lease |
 
 ## MCP Bridges
 

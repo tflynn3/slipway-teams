@@ -66,6 +66,7 @@ def validate_rendered_teams() -> None:
         ("teams/software-factory", ["--overlay", "pr-agent-reviewer"]),
         ("teams/sre-rollout", []),
         ("teams/bug-hunter", []),
+        ("teams/autonomous-org", []),
     ]
     for team, extra in cases:
         res = subprocess.run(

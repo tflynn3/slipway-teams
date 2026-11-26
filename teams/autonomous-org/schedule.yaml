@@ -1,0 +1,18 @@
+apiVersion: slipway.dev/v1alpha1
+kind: WorkflowSchedule
+metadata:
+  name: __TEAM_NAME__-loop
+  namespace: __NAMESPACE__
+spec:
+  agentSet: __TEAM_NAME__
+  recipe:
+    name: __TEAM_NAME__-recipe-v1
+    key: recipe.yaml
+  inputs:
+    scope: __TARGET_SCOPE__
+  scope: __TARGET_SCOPE__
+  mode: Continuous
+  cooldownSeconds: 480
+  failureBackoffSeconds: 120
+  historyLimit: 10
+  carryForwardOutput: true

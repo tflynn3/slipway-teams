@@ -1,0 +1,148 @@
+apiVersion: api.kagent.dev/v1alpha3
+kind: AgentTemplate
+metadata:
+  name: __TEAM_NAME__-researcher-template
+  namespace: __NAMESPACE__
+spec:
+  modelConfig:
+    name: __MODEL_CONFIG__
+  description: "Principal Research Scientist identifying domain gaps, infra trade-offs, and specialist roles"
+  systemPrompt: |
+    You are the Principal Research Scientist for the product organization.
+    Inspect the repository, open roadmap issues, active teams, QA reports, and any priorCycle context.
+    Identify high-impact capability gaps, infrastructure recommendations, and specialized engineering roles
+    that would accelerate delivery. Return ONLY strict JSON matching the research schema.
+---
+apiVersion: api.kagent.dev/v1alpha3
+kind: Agent
+metadata:
+  name: __TEAM_NAME__-researcher
+  namespace: __NAMESPACE__
+spec:
+  harnessRef:
+    name: __HARNESS_REF__
+  template:
+    ref:
+      name: __TEAM_NAME__-researcher-template
+---
+apiVersion: api.kagent.dev/v1alpha3
+kind: AgentTemplate
+metadata:
+  name: __TEAM_NAME__-pm-template
+  namespace: __NAMESPACE__
+spec:
+  modelConfig:
+    name: __MODEL_CONFIG__
+  description: "Product Manager curating roadmap issues and selecting independent parallel engineering tracks"
+  systemPrompt: |
+    You are the Product Manager for the product organization.
+    Using the Research brief, open issues, and QA reports, maintain a deduplicated roadmap and select
+    2 to 3 independent, parallelizable tracks across disjoint subsystems for concurrent delivery.
+    Return ONLY strict JSON matching the PM schema.
+---
+apiVersion: api.kagent.dev/v1alpha3
+kind: Agent
+metadata:
+  name: __TEAM_NAME__-pm
+  namespace: __NAMESPACE__
+spec:
+  harnessRef:
+    name: __HARNESS_REF__
+  template:
+    ref:
+      name: __TEAM_NAME__-pm-template
+---
+apiVersion: api.kagent.dev/v1alpha3
+kind: AgentTemplate
+metadata:
+  name: __TEAM_NAME__-architect-template
+  namespace: __NAMESPACE__
+spec:
+  modelConfig:
+    name: __MODEL_CONFIG__
+  description: "Software Architect scoping parallel tracks, PathLease boundaries, infra decisions, and recruiting requests"
+  systemPrompt: |
+    You are the Principal Software Architect for the product organization.
+    Translate the PM's selectedTracks into parallelizable workItems with non-overlapping PathLease writes globs
+    and explicit targetAgentSet assignments. When a track needs a dedicated specialist team not yet provisioned,
+    emit it in recruitingRequests so the Recruiter provisions its AgentTemplate, Agent, and AgentSet.
+    Return ONLY strict JSON matching the plan schema.
+---
+apiVersion: api.kagent.dev/v1alpha3
+kind: Agent
+metadata:
+  name: __TEAM_NAME__-architect
+  namespace: __NAMESPACE__
+spec:
+  harnessRef:
+    name: __HARNESS_REF__
+  template:
+    ref:
+      name: __TEAM_NAME__-architect-template
+---
+apiVersion: api.kagent.dev/v1alpha3
+kind: AgentTemplate
+metadata:
+  name: __TEAM_NAME__-recruiter-template
+  namespace: __NAMESPACE__
+spec:
+  modelConfig:
+    name: __MODEL_CONFIG__
+  description: "Technical Recruiter researching specialist roles and provisioning kagent AgentTemplates and Slipway AgentSets"
+  systemPrompt: |
+    You are the Technical Recruiter and Org Architect.
+    For every role in inputs.recruitingRequests not already provisioned, research domain best practices,
+    failure modes, and review checklists, then provision dedicated kagent AgentTemplates, Agents, and a
+    Slipway AgentSet for that specialty. Return ONLY strict JSON matching the recruit schema.
+---
+apiVersion: api.kagent.dev/v1alpha3
+kind: Agent
+metadata:
+  name: __TEAM_NAME__-recruiter
+  namespace: __NAMESPACE__
+spec:
+  harnessRef:
+    name: __HARNESS_REF__
+  template:
+    ref:
+      name: __TEAM_NAME__-recruiter-template
+---
+apiVersion: slipway.dev/v1alpha1
+kind: AgentSet
+metadata:
+  name: __TEAM_NAME__
+  namespace: __NAMESPACE__
+spec:
+  claims:
+    - name: researcher
+      replicas: 1
+      template:
+        spec:
+          agentRef:
+            name: __TEAM_NAME__-researcher
+          rebindPolicy: Always
+          resetPolicy: AfterAssignment
+    - name: pm
+      replicas: 1
+      template:
+        spec:
+          agentRef:
+            name: __TEAM_NAME__-pm
+          rebindPolicy: Always
+          resetPolicy: Never
+    - name: architect
+      replicas: 1
+      template:
+        spec:
+          agentRef:
+            name: __TEAM_NAME__-architect
+          rebindPolicy: Always
+          resetPolicy: Never
+    - name: recruiter
+      replicas: 1
+      template:
+        spec:
+          agentRef:
+            name: __TEAM_NAME__-recruiter
+          rebindPolicy: Always
+          resetPolicy: AfterAssignment

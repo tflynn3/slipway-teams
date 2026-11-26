@@ -1,0 +1,32 @@
+# Autonomous Organization Leadership Pack
+
+Higher-level executive council team pack for Slipway + kagent that runs continuously on a `WorkflowSchedule` to research the domain, curate a product roadmap, scope parallel engineering tracks with `PathLease` isolation, and dynamically recruit specialized engineering `AgentTemplate`s and `AgentSet`s on demand.
+
+## Seats (`AgentSet`)
+
+| Seat | Replicas | `resetPolicy` | Role |
+|---|---|---|---|
+| `researcher` | 1 | `AfterAssignment` | Researches domain best practices, capability gaps, infrastructure trade-offs, and specialist roles |
+| `pm` | 1 | `Never` | Maintains long-horizon roadmap context, curates deduplicated issues, and picks 2–3 parallel tracks |
+| `architect` | 1 | `Never` | Makes architecture & infrastructure decisions, scopes non-overlapping `PathLease` globs, assigns teams, and emits `recruitingRequests` |
+| `recruiter` | 1 | `AfterAssignment` | Researches requested specialist roles (e.g., data engineer, security expert, query optimizer) and provisions dedicated kagent `AgentTemplate`s, `Agent`s, and Slipway `AgentSet`s |
+
+## Leadership Cycle (`WorkflowSchedule`)
+
+```text
+research ──▶ pm ──▶ architect ──▶ recruit
+```
+
+- Uses `mode: Continuous` with `carryForwardOutput: true` so the council sees prior cycle outcomes and active recruited teams automatically.
+- Uses an immutable `schemaFrom` ConfigMap (`__TEAM_NAME__-schemas`) so every step's structured JSON contract is versioned once and validated by Slipway.
+- Pair with one or more downstream engineering `AgentSet`s (such as [`teams/software-factory`](../software-factory)) plus any specialist `AgentSet`s provisioned dynamically by the `recruiter` seat.
+
+## Usage
+
+```sh
+NAMESPACE=kagent \
+TEAM_NAME=acme-leadership \
+MODEL_CONFIG=my-model \
+TARGET_SCOPE=org/acme-leadership \
+./scripts/render-team.sh teams/autonomous-org --apply
+```

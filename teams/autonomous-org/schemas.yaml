@@ -1,0 +1,123 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: __TEAM_NAME__-schemas
+  namespace: __NAMESPACE__
+immutable: true
+data:
+  research.json: |
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "summary": {"type": "string"},
+        "domainFindings": {"type": "array", "items": {"type": "string"}},
+        "capabilityGaps": {"type": "array", "items": {"type": "string"}},
+        "infraRecommendations": {"type": "array", "items": {"type": "string"}},
+        "specialistRoleIdeas": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "role": {"type": "string"},
+              "rationale": {"type": "string"}
+            },
+            "required": ["role", "rationale"]
+          }
+        }
+      },
+      "required": ["summary", "domainFindings", "capabilityGaps", "infraRecommendations", "specialistRoleIdeas"]
+    }
+  pm.json: |
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "roadmapSummary": {"type": "string"},
+        "milestoneGoal": {"type": "string"},
+        "createdIssues": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "number": {"type": "integer"},
+              "title": {"type": "string"}
+            },
+            "required": ["number", "title"]
+          }
+        },
+        "selectedTracks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "issueNumber": {"type": "integer"},
+              "title": {"type": "string"},
+              "priority": {"type": "string"},
+              "scopeSummary": {"type": "string"},
+              "acceptanceCriteria": {"type": "string"},
+              "suggestedSpecialty": {"type": "string"}
+            },
+            "required": ["issueNumber", "title", "priority", "scopeSummary", "acceptanceCriteria", "suggestedSpecialty"]
+          }
+        }
+      },
+      "required": ["roadmapSummary", "milestoneGoal", "createdIssues", "selectedTracks"]
+    }
+  plan.json: |
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "cycleGoal": {"type": "string"},
+        "architecturalNotes": {"type": "string"},
+        "updateVerifier": {"type": "boolean"},
+        "verifierTask": {"type": "string"},
+        "qaEvalTask": {"type": "string"},
+        "recruitingRequests": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "role": {"type": "string"},
+              "reason": {"type": "string"}
+            },
+            "required": ["role", "reason"]
+          }
+        },
+        "workItems": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "name": {"type": "string"},
+              "title": {"type": "string"},
+              "issueNumber": {"type": "integer"},
+              "targetAgentSet": {"type": "string"},
+              "instructions": {"type": "string"},
+              "mode": {"type": "string"},
+              "reads": {"type": "array", "items": {"type": "string"}},
+              "writes": {"type": "array", "items": {"type": "string"}}
+            },
+            "required": ["name", "title", "issueNumber", "targetAgentSet", "instructions", "mode", "reads", "writes"]
+          }
+        }
+      },
+      "required": ["cycleGoal", "architecturalNotes", "updateVerifier", "verifierTask", "qaEvalTask", "recruitingRequests", "workItems"]
+    }
+  recruit.json: |
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "provisionedTeams": {"type": "array", "items": {"type": "string"}},
+        "activeTeams": {"type": "array", "items": {"type": "string"}},
+        "summary": {"type": "string"}
+      },
+      "required": ["provisionedTeams", "activeTeams", "summary"]
+    }

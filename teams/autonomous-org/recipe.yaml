@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: __TEAM_NAME__-recipe-v1
+  namespace: __NAMESPACE__
+immutable: true
+data:
+  recipe.yaml: |
+    inputs: [scope]
+    timeout: 30m
+    mode: Exclusive
+    writes: ["council/**"]
+    steps:
+      - name: research
+        recipePath: leadership/research
+        agent:
+          group: researcher
+          instructions: |
+            Conduct focused technical and product research for scope=${scope}.
+            Inspect the repository, open roadmap issues, active teams, QA reports, and any priorCycle context.
+            Identify capability gaps, infrastructure trade-offs, and specialist roles worth recruiting.
+        output:
+          schemaFrom:
+            name: __TEAM_NAME__-schemas
+            key: research.json
+      - name: pm
+        recipePath: leadership/pm
+        dependsOn: [research]
+        inputsFrom:
+          researchSummary: {step: research, field: summary}
+          capabilityGaps: {step: research, field: capabilityGaps}
+          specialistRoleIdeas: {step: research, field: specialistRoleIdeas}
+        agent:
+          group: pm
+          instructions: |
+            Curate the product roadmap for scope=${scope} using the Research brief.
+            Deduplicate open issues, close completed issues, and select 2 to 3 independent parallel tracks.
+        output:
+          schemaFrom:
+            name: __TEAM_NAME__-schemas
+            key: pm.json
+      - name: architect
+        recipePath: leadership/architect
+        dependsOn: [pm]
+        inputsFrom:
+          researchSummary: {step: research, field: summary}
+          infraRecommendations: {step: research, field: infraRecommendations}
+          milestoneGoal: {step: pm, field: milestoneGoal}
+          selectedTracks: {step: pm, field: selectedTracks}
+        agent:
+          group: architect
+          instructions: |
+            Translate the PM's selectedTracks into 2 to 3 parallelizable workItems with non-overlapping PathLease
+            writes globs, assign each workItem to an existing or newly requested specialist AgentSet, and emit
+            recruitingRequests for any new specialist role needed.
+        output:
+          schemaFrom:
+            name: __TEAM_NAME__-schemas
+            key: plan.json
+      - name: recruit
+        recipePath: leadership/recruit
+        dependsOn: [architect]
+        inputsFrom:
+          cycleGoal: {step: architect, field: cycleGoal}
+          recruitingRequests: {step: architect, field: recruitingRequests}
+        agent:
+          group: recruiter
+          instructions: |
+            Research every requested specialist role in inputs.recruitingRequests and provision its kagent
+            AgentTemplates, Agents, and Slipway AgentSet before downstream parallel delivery starts.
+        output:
+          schemaFrom:
+            name: __TEAM_NAME__-schemas
+            key: recruit.json
