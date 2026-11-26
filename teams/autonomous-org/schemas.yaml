@@ -5,6 +5,44 @@ metadata:
   namespace: __NAMESPACE__
 immutable: true
 data:
+  bughunt.json: |
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "summary": {"type": "string"},
+        "qualityHealthScore": {"type": "integer"},
+        "mustFixBeforeFeatures": {"type": "boolean"},
+        "bugsFound": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "severity": {"type": "string"},
+              "title": {"type": "string"},
+              "location": {"type": "string"},
+              "repro": {"type": "string"}
+            },
+            "required": ["severity", "title", "location", "repro"]
+          }
+        },
+        "polishOpportunities": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "area": {"type": "string"},
+              "title": {"type": "string"},
+              "rationale": {"type": "string"}
+            },
+            "required": ["area", "title", "rationale"]
+          }
+        }
+      },
+      "required": ["summary", "qualityHealthScore", "mustFixBeforeFeatures", "bugsFound", "polishOpportunities"]
+    }
   research.json: |
     {
       "type": "object",

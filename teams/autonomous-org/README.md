@@ -7,14 +7,17 @@ Higher-level executive council team pack for Slipway + kagent that runs continuo
 | Seat | Replicas | `resetPolicy` | Role |
 |---|---|---|---|
 | `researcher` | 1 | `AfterAssignment` | Researches domain best practices, capability gaps, infrastructure trade-offs, and specialist roles |
-| `pm` | 1 | `Never` | Maintains long-horizon roadmap context, curates deduplicated issues, and picks 2–3 parallel tracks |
+| `bughunter` | 1 | `AfterAssignment` | Runs in parallel with `researcher` to hunt real bugs, races, edge cases, and DX/code polish debt so the org balances quality against feature delivery |
+| `pm` | 1 | `Never` | Maintains long-horizon roadmap context, curates feature/bug/polish issues, and picks 1–3 parallel tracks |
 | `architect` | 1 | `Never` | Makes architecture & infrastructure decisions, scopes non-overlapping `PathLease` globs, assigns teams, and emits `recruitingRequests` |
 | `recruiter` | 1 | `AfterAssignment` | Researches requested specialist roles (e.g., data engineer, security expert, query optimizer) and provisions dedicated kagent `AgentTemplate`s, `Agent`s, and Slipway `AgentSet`s |
 
 ## Leadership Cycle (`WorkflowSchedule`)
 
 ```text
-research ──▶ pm ──▶ architect ──▶ recruit
+  research ──┐
+             ├──▶ pm ──▶ architect ──▶ recruit
+ bughunter ──┘
 ```
 
 - Uses `mode: Continuous` with `carryForwardOutput: true` so the council sees prior cycle outcomes and active recruited teams automatically.

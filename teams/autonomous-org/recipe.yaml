@@ -23,18 +23,34 @@ data:
           schemaFrom:
             name: __TEAM_NAME__-schemas
             key: research.json
+      - name: bughunter
+        recipePath: leadership/bughunter
+        agent:
+          group: bughunter
+          instructions: |
+            Audit scope=${scope} for concrete bugs, race conditions, error-handling gaps, test holes, and DX/polish debt.
+            Report severity, repro notes, polish opportunities, and an honest qualityHealthScore (0-100).
+        output:
+          schemaFrom:
+            name: __TEAM_NAME__-schemas
+            key: bughunt.json
       - name: pm
         recipePath: leadership/pm
-        dependsOn: [research]
+        dependsOn: [research, bughunter]
         inputsFrom:
           researchSummary: {step: research, field: summary}
           capabilityGaps: {step: research, field: capabilityGaps}
           specialistRoleIdeas: {step: research, field: specialistRoleIdeas}
+          qualityHealthScore: {step: bughunter, field: qualityHealthScore}
+          mustFixBeforeFeatures: {step: bughunter, field: mustFixBeforeFeatures}
+          bugsFound: {step: bughunter, field: bugsFound}
+          polishOpportunities: {step: bughunter, field: polishOpportunities}
         agent:
           group: pm
           instructions: |
-            Curate the product roadmap for scope=${scope} using the Research brief.
-            Deduplicate open issues, close completed issues, and select 2 to 3 independent parallel tracks.
+            Curate the product roadmap for scope=${scope} using BOTH the Research brief and Bug Hunter audit.
+            Deduplicate open issues, close completed issues, reserve capacity for P0 bugs and polish when
+            qualityHealthScore < 88 or bugsFound is non-empty, and select 1 to 3 unassigned parallel tracks.
         output:
           schemaFrom:
             name: __TEAM_NAME__-schemas

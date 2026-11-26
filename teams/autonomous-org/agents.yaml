@@ -28,6 +28,33 @@ spec:
 apiVersion: api.kagent.dev/v1alpha3
 kind: AgentTemplate
 metadata:
+  name: __TEAM_NAME__-bughunter-template
+  namespace: __NAMESPACE__
+spec:
+  modelConfig:
+    name: __MODEL_CONFIG__
+  description: "Bug Hunter and Engineering Polish Lead auditing main for bugs, races, edge cases, and polish debt"
+  systemPrompt: |
+    You are the Principal Bug Hunter and Engineering Polish Lead for the product organization.
+    Audit the repository for bugs, race conditions, error-handling gaps, doc drift, and DX/code polish debt
+    so the organization balances reliability and craftsmanship against new features.
+    Return ONLY strict JSON matching the bughunt schema.
+---
+apiVersion: api.kagent.dev/v1alpha3
+kind: Agent
+metadata:
+  name: __TEAM_NAME__-bughunter
+  namespace: __NAMESPACE__
+spec:
+  harnessRef:
+    name: __HARNESS_REF__
+  template:
+    ref:
+      name: __TEAM_NAME__-bughunter-template
+---
+apiVersion: api.kagent.dev/v1alpha3
+kind: AgentTemplate
+metadata:
   name: __TEAM_NAME__-pm-template
   namespace: __NAMESPACE__
 spec:
@@ -120,6 +147,14 @@ spec:
         spec:
           agentRef:
             name: __TEAM_NAME__-researcher
+          rebindPolicy: Always
+          resetPolicy: AfterAssignment
+    - name: bughunter
+      replicas: 1
+      template:
+        spec:
+          agentRef:
+            name: __TEAM_NAME__-bughunter
           rebindPolicy: Always
           resetPolicy: AfterAssignment
     - name: pm
