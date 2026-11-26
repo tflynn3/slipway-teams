@@ -1,0 +1,26 @@
+apiVersion: slipway.dev/v1alpha1
+kind: WorkflowDispatch
+metadata:
+  name: __TEAM_NAME__-fanout
+  namespace: __NAMESPACE__
+spec:
+  source:
+    scheduleName: __TEAM_NAME__-loop
+    step: architect
+    itemsField: workItems
+  defaultAgentSet: __TEAM_NAME__
+  agentSetField: targetAgentSet
+  fallbackToDefaultAgentSet: true
+  dedupeKeyField: issueNumber
+  itemNameField: name
+  recipe:
+    name: __TEAM_NAME__-recipe-v1
+    key: recipe.yaml
+  inputs:
+    scope: __TARGET_SCOPE__
+  scope: __TARGET_SCOPE__
+  repairAttempts: 2
+  backlogTimeoutSeconds: 5400
+  maxConcurrent: 4
+  maxItemsPerRun: 6
+  historyLimit: 20

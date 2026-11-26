@@ -98,7 +98,7 @@ PY
 export NAMESPACE TEAM_NAME MODEL_CONFIG HARNESS_REF REPO_URL TARGET_BRANCH GIT_SECRET VERIFIER_IMAGE TARGET_SCOPE SERVICE_NAME
 
 FILES=()
-for base in schemas.yaml verifier.yaml agents.yaml agentset.yaml recipe.yaml recipes.yaml schedule.yaml; do
+for base in schemas.yaml verifier.yaml agents.yaml agentset.yaml recipe.yaml recipes.yaml schedule.yaml dispatch.yaml; do
   if [[ -f "$TEAM_DIR/$base" ]]; then
     FILES+=("$TEAM_DIR/$base")
   fi

@@ -22,7 +22,7 @@ Higher-level executive council team pack for Slipway + kagent that runs continuo
 
 - Uses `mode: Continuous` with `carryForwardOutput: true` so the council sees prior cycle outcomes and active recruited teams automatically.
 - Uses an immutable `schemaFrom` ConfigMap (`__TEAM_NAME__-schemas`) so every step's structured JSON contract is versioned once and validated by Slipway.
-- Pair with one or more downstream engineering `AgentSet`s (such as [`teams/software-factory`](../software-factory)) plus any specialist `AgentSet`s provisioned dynamically by the `recruiter` seat.
+- Includes a native event-driven `WorkflowDispatch` (`dispatch.yaml`) that watches `WorkflowSchedule/__TEAM_NAME__-loop` completions and fans out `architect.workItems` into parallel `WorkflowBacklog`s routed to dynamically recruited specialist `AgentSet`s with active-key deduplication and concurrency bounds.
 
 ## Usage
 
