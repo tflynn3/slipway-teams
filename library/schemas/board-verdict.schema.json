@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://slipway.dev/library/board-verdict.schema.json",
+  "title": "Release Board verdict",
+  "description": "An independent judge's verdict on a vision draft or a release plan. The Board can reject; it cannot rewrite.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["verdict", "reasons", "requiredChanges", "summary"],
+  "properties": {
+    "verdict": {"type": "string", "enum": ["approve", "reject"]},
+    "reasons": {"type": "array", "maxItems": 12, "items": {"$ref": "defs.json#/$defs/text"}},
+    "requiredChanges": {"type": "array", "maxItems": 12, "items": {"$ref": "defs.json#/$defs/text"}},
+    "summary": {"$ref": "defs.json#/$defs/text"}
+  }
+}

@@ -13,6 +13,10 @@ Slipway keeps its core control plane domain-agnostic (`AgentSet`, `WorkflowRun`,
 | [`teams/bug-hunter`](teams/bug-hunter) | Continuous black-box bug hunting, deterministic reproduction, and triage carrying findings across cycles | `AgentSet`, `WorkflowSchedule` (`Continuous`, `carryForwardOutput: true`), `Verifier`, non-Git `scope` lease |
 | [`teams/autonomous-org`](teams/autonomous-org) | Executive leadership council (`research` + `bughunter` → `pm` → `architect` → `recruit`) with native `WorkflowDispatch` fan-out that continuously hunts bugs/polish debt, builds the roadmap, and spins up specialist `AgentTemplate`s + `AgentSet`s | `AgentSet`, `WorkflowSchedule` (`Continuous`, `carryForwardOutput: true`), `WorkflowDispatch`, immutable `schemaFrom` ConfigMaps, `inputsFrom`, non-Git `scope` lease |
 
+## Delivery Library
+
+[`library/`](library) holds the shared vocabulary and contracts for the Slipway delivery model: an Owner writes one product line and approves the vision a top-tier model drafts from it, and the factory then plans releases, builds toward their outcomes, validates release candidates and promotes them. It contains canonical terms and the words to avoid (`terms.yaml`), ID patterns such as `bog/0.2/O1`, and the vision, release-plan and Release Board verdict schemas. Packs render self-contained copies so step-output validation and agent-side validation enforce the same rules.
+
 ## MCP Bridges
 
 | Bridge | Purpose |

@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://slipway.dev/library/vision.schema.json",
+  "title": "Product vision",
+  "description": "Drafted by the Director from the Owner's product line, critiqued by the Release Board, approved by the Owner at G0. Immutable once approved.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "productLine", "users", "userJobs", "nonGoals", "principles", "successMetrics", "releaseThemes", "escalation"],
+  "properties": {
+    "id": {"$ref": "defs.json#/$defs/visionId"},
+    "productLine": {"$ref": "defs.json#/$defs/text"},
+    "users": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "who"],
+        "properties": {
+          "id": {"$ref": "defs.json#/$defs/userId"},
+          "who": {"$ref": "defs.json#/$defs/text"}
+        }
+      }
+    },
+    "userJobs": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "user", "job", "measure"],
+        "properties": {
+          "id": {"$ref": "defs.json#/$defs/userJobId"},
+          "user": {"$ref": "defs.json#/$defs/userId"},
+          "job": {"$ref": "defs.json#/$defs/text"},
+          "measure": {"$ref": "defs.json#/$defs/text"}
+        }
+      }
+    },
+    "nonGoals": {"type": "array", "minItems": 1, "maxItems": 10, "items": {"$ref": "defs.json#/$defs/text"}},
+    "principles": {"type": "array", "minItems": 1, "maxItems": 8, "items": {"$ref": "defs.json#/$defs/text"}},
+    "successMetrics": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "target"],
+        "properties": {
+          "id": {"$ref": "defs.json#/$defs/metricId"},
+          "target": {"$ref": "defs.json#/$defs/text"}
+        }
+      }
+    },
+    "releaseThemes": {"type": "array", "minItems": 1, "maxItems": 8, "items": {"$ref": "defs.json#/$defs/text"}},
+    "escalation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stallCycles", "handoffCycles", "rcStageFailures", "boardRejections", "lowDriftReleases"],
+      "properties": {
+        "stallCycles": {"type": "integer", "minimum": 2, "maximum": 30},
+        "handoffCycles": {"type": "integer", "minimum": 1, "maximum": 30},
+        "rcStageFailures": {"type": "integer", "minimum": 1, "maximum": 10},
+        "boardRejections": {"type": "integer", "minimum": 1, "maximum": 10},
+        "lowDriftReleases": {"type": "integer", "minimum": 1, "maximum": 10}
+      }
+    }
+  }
+}

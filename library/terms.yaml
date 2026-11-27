@@ -1,0 +1,124 @@
+# Slipway delivery library: terminology, naming patterns and status vocabularies.
+# One concept has one name. Words under `avoid` are rejected in schema-validated titles
+# (see schemas/defs.json `title`) and should not appear in agent prompts or issue titles.
+version: 1
+
+terms:
+  - term: Product line
+    meaning: The one sentence the Owner writes - what the product is and its mission. Everything starts here.
+    slipway: input to the direction/vision recipe
+    avoid: [prompt, idea]
+  - term: Vision
+    meaning: Fixed-format document the Director drafts from the product line - users, user jobs, non-goals, principles, success metrics, release themes, escalation thresholds. Immutable once approved at G0.
+    slipway: ConfigMap <product>-vision-v<N> (schemas/vision.schema.json)
+    avoid: [strategy, north star]
+  - term: Vision amendment
+    meaning: A proposed new vision version with the evidence behind it. Only the Owner approves it.
+    slipway: new vision version through the same G0 approval
+    avoid: [pivot]
+  - term: User job
+    meaning: Something a target user needs to get done, written so it can be tested. Every outcome traces to one.
+    slipway: vision userJobs[] (<product>/UJ<n>)
+    avoid: [feature, use case]
+  - term: Release
+    meaning: A planned version with one theme, 1-5 outcomes and frozen promotion criteria. The unit of progress.
+    slipway: ConfigMap <product>-release-<major>-<minor> (schemas/release.schema.json); a Release resource from M3
+    avoid: [milestone, phase, epic]
+  - term: Outcome
+    meaning: A user-visible capability the release must deliver, proven by acceptance journeys.
+    slipway: release outcomes[] (<release>/O<n>)
+    avoid: [goal, objective, deliverable]
+  - term: Acceptance journey
+    meaning: A runnable black-box scenario that proves an outcome, written from the outcome text and hidden from builders.
+    slipway: verifier profile journeys (<outcome>/J<n>)
+    avoid: [test plan, evidence]
+  - term: Promotion criteria
+    meaning: The pass bars for every release-candidate stage, fixed at G1 and hashed. Only a new release changes them.
+    slipway: release stages + criteriaHash
+    avoid: [quality bar, definition of done]
+  - term: Release Board
+    meaning: Independent reviewers that approve or reject a vision draft or release plan. They cannot rewrite it.
+    slipway: AgentSet <product>-direction, group board
+    avoid: [review team]
+  - term: Cycle
+    meaning: One pass of the leadership loop and the delivery it dispatches.
+    slipway: WorkflowSchedule iteration
+    avoid: [sprint, round]
+  - term: Cycle focus
+    meaning: The outcome IDs a cycle works on. Replaces free-text cycle goals.
+    slipway: architect plan cycleFocus[] (replaces milestoneGoal and cycleGoal)
+    avoid: [cycle goal, milestone goal]
+  - term: Track
+    meaning: An issue the PM selects for a cycle. Cites exactly one outcome ID.
+    slipway: PM selectedTracks[].outcomeId
+    avoid: [ticket, task]
+  - term: Work item
+    meaning: A parallel slice of a track with its own path lease. Cites exactly one outcome ID.
+    slipway: architect workItems[].outcomeId, PathLease
+    avoid: [subtask]
+  - term: Proposal
+    meaning: An idea that serves no current outcome. Parked for the Director; never dispatched directly.
+    slipway: GitHub label proposal, state/proposals.jsonl
+    avoid: [backlog item]
+  - term: Outcome status
+    meaning: Computed by the controller from journey results - Planned, Building, Passing, Validated.
+    slipway: delivery state outcomes[].state
+    avoid: [done, complete, finished]
+  - term: Stall
+    meaning: An outcome with no status change for N cycles. Triggers a single-owner handoff, then escalation.
+    slipway: delivery state outcomes[].stalled
+    avoid: [blocked]
+  - term: Release candidate (RC)
+    meaning: One commit, built once, tagged v<semver>-rc.<n>, that goes through every validation stage.
+    slipway: GitHub prerelease + rc-validation WorkflowRun
+    avoid: [build, snapshot]
+  - term: Validation stage
+    meaning: One RC check - contract, journeys, soak, synthetic users, dogfood.
+    slipway: verify steps in the rc-validation WorkflowRun
+    avoid: [qualification]
+  - term: Promotion
+    meaning: Tagging the RC's commit as the release and publishing its artifacts unchanged, when every bar is met.
+    slipway: controller action
+    avoid: [ship, sign off]
+  - term: Withdrawal
+    meaning: Automatic removal of a promoted release after a dogfood regression, followed by a patch release.
+    slipway: controller action
+    avoid: [rollback]
+  - term: Independent judge
+    meaning: Any seat that evaluates work it did not produce - fresh each time, blind to code where possible, ideally another model vendor.
+    slipway: resetPolicy AfterAssignment
+    avoid: []
+  - term: Gate
+    meaning: A point work cannot pass until a condition holds. G0 is the Owner's vision approval; G1 to G3 are automated.
+    slipway: WorkflowRun successWhen and controller checks
+    avoid: [checkpoint]
+  - term: Escalation
+    meaning: The only unplanned route to the Owner, with a fixed list of triggers.
+    slipway: GitHub issue labeled escalation
+    avoid: [ping, ask the human]
+
+naming:
+  productSlug: {pattern: "lowercase kebab, 3-20 characters", example: bog}
+  vision: {pattern: "<product>-vision-v<N>", example: bog-vision-v1}
+  userJobId: {pattern: "<product>/UJ<n>", example: bog/UJ3}
+  releaseId: {pattern: "<product>/<major>.<minor>", example: bog/0.2}
+  releaseObject: {pattern: "<product>-release-<major>-<minor>", example: bog-release-0-2}
+  outcomeId: {pattern: "<release ID>/O<n>", example: bog/0.2/O1}
+  journeyId: {pattern: "<outcome ID>/J<n>", example: bog/0.2/O1/J2}
+  issueLabel: {pattern: "outcome:<outcome ID>", example: "outcome:bog/0.2/O1"}
+  issueTitle: {pattern: "verb plus the user-visible result", example: Serve retained history from the bog server}
+  commitTrailer: {pattern: "Outcome: <outcome ID>", example: "Outcome: bog/0.2/O1"}
+  rcTag: {pattern: "v<semver>-rc.<n>", example: v0.2.0-rc.3}
+  releaseTag: {pattern: "v<semver>", example: v0.2.0}
+  team: {pattern: "<product>-<team>", example: bog-direction}
+  seat: {pattern: "role noun, singular, kebab", example: release-planner}
+  recipePath: {pattern: "<team>/<step>", example: direction/release-plan}
+  verifier: {pattern: "<product>-<stage>", example: bog-blackbox}
+
+states:
+  vision: [Draft, Critiqued, Approved, Superseded]
+  release: [Planned, Frozen, Building, Candidate, Released, Withdrawn, Abandoned]
+  outcome: [Planned, Building, Passing, Validated]
+  outcomeFlags: [Stalled, Abandoned]
+  candidate: [Cut, Validating, Promoted, Rejected]
+  proposal: [Parked, Adopted, Declined]

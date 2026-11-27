@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://slipway.dev/library/release.schema.json",
+  "title": "Release plan",
+  "description": "Planned by the Director from the approved vision, approved by the Release Board at G1, then frozen: the criteria hash covers this document. Only a new release changes it.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "vision", "theme", "summary", "outcomes", "stages", "budget"],
+  "properties": {
+    "id": {"$ref": "defs.json#/$defs/releaseId"},
+    "vision": {"$ref": "defs.json#/$defs/visionId"},
+    "theme": {"$ref": "defs.json#/$defs/text"},
+    "summary": {"$ref": "defs.json#/$defs/text"},
+    "outcomes": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "userJob", "title", "behavior", "journeys"],
+        "properties": {
+          "id": {"$ref": "defs.json#/$defs/outcomeId"},
+          "userJob": {"$ref": "defs.json#/$defs/userJobId"},
+          "title": {"$ref": "defs.json#/$defs/title"},
+          "behavior": {"$ref": "defs.json#/$defs/text"},
+          "journeys": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 4,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "spec"],
+              "properties": {
+                "id": {"$ref": "defs.json#/$defs/journeyId"},
+                "spec": {"$ref": "defs.json#/$defs/text"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "stages": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contract", "journeys"],
+      "properties": {
+        "contract": {"$ref": "defs.json#/$defs/stageBar"},
+        "journeys": {"$ref": "defs.json#/$defs/stageBar"},
+        "soak": {"type": "object"},
+        "syntheticUsers": {"type": "object"},
+        "dogfood": {"type": "object"}
+      }
+    },
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tokensM", "days"],
+      "properties": {
+        "tokensM": {"type": "integer", "minimum": 1, "maximum": 5000},
+        "days": {"type": "integer", "minimum": 1, "maximum": 60}
+      }
+    }
+  }
+}
